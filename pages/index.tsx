@@ -47,7 +47,11 @@ export default function Home() {
       // Generate unique request ID for tracking
       const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      const endpoint = testMode ? '/api/test-seo' : '/api/seo';
+      // Use production domain for API calls
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? 'https://seo-product-analyzer.vercel.app' 
+        : '';
+      const endpoint = testMode ? `${baseUrl}/api/test-seo` : `${baseUrl}/api/seo`;
       
       // Send POST request with proper JSON payload
       const response = await fetch(endpoint, {
