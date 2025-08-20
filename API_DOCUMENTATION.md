@@ -1,7 +1,7 @@
 # API Documentation - SEO Product Analyzer
 
-## 🚀 **New Production URL**
-**https://seo-product-analyzer-cdot896hv-dreamteamdevs-projects.vercel.app**
+## 🚀 **Production URL**
+**https://seo-product-analyzer.vercel.app**
 
 ## 📋 **Form Submission Format**
 
@@ -155,7 +155,7 @@ POST /api/seo-results
 
 ### **Test Mode (Immediate Response):**
 ```bash
-curl -X POST https://seo-product-analyzer-cdot896hv-dreamteamdevs-projects.vercel.app/api/test-seo \
+curl -X POST https://seo-product-analyzer.vercel.app/api/test-seo \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -d '{
@@ -166,7 +166,7 @@ curl -X POST https://seo-product-analyzer-cdot896hv-dreamteamdevs-projects.verce
 
 ### **Live Mode (n8n Integration):**
 ```bash
-curl -X POST https://seo-product-analyzer-cdot896hv-dreamteamdevs-projects.vercel.app/api/seo \
+curl -X POST https://seo-product-analyzer.vercel.app/api/seo \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -d '{
@@ -258,7 +258,7 @@ https://dnzsrslk.app.n8n.cloud/webhook/cb04381c-f75c-403e-8dee-0ccc087fd732
 
 ### **n8n Response Webhook:**
 ```
-https://seo-product-analyzer-cdot896hv-dreamteamdevs-projects.vercel.app/api/seo-results
+https://seo-product-analyzer.vercel.app/api/seo-results
 ```
 
 ## ⚡ **Performance Notes**
