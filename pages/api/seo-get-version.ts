@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://your-n8n-domain.com/webhook/cb04381c-f75c-403e-8dee-0ccc087fd732';
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://dnzsrslk.app.n8n.cloud/webhook/cb04381c-f75c-403e-8dee-0ccc087fd732';
 
 interface PendingRequest {
   resolve: (value: any) => void;
@@ -21,9 +21,6 @@ export default async function handler(
 
   try {
     const { title, requestId } = req.body;
-    console.log('=== SEO API REQUEST ===');
-    console.log('Title:', title);
-    console.log('RequestId:', requestId);
 
     if (!title) {
       return res.status(400).json({ error: 'Product title is required' });
@@ -33,13 +30,12 @@ export default async function handler(
       return res.status(400).json({ error: 'Request ID is required' });
     }
 
-    console.log('Setting up pending request for:', requestId);
+    // Use the request ID provided by the frontend
     
     // Create promise to wait for webhook response
     const responsePromise = new Promise<any>((resolve, reject) => {
       // Set timeout for 60 seconds
       const timeout = setTimeout(() => {
-        console.log('Request timeout for:', requestId);
         pendingRequests.delete(requestId);
         reject(new Error('Request timeout'));
       }, 60000);
@@ -47,33 +43,22 @@ export default async function handler(
       pendingRequests.set(requestId, { resolve, reject, timeout });
     });
 
-    console.log('Triggering n8n webhook:', N8N_WEBHOOK_URL);
-    
-    // Trigger n8n workflow
-    const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        title: title,
-        requestId: requestId
-      }),
-    });
+    // Trigger n8n workflow using GET method with query parameters
+    const webhookUrl = new URL(N8N_WEBHOOK_URL);
+    webhookUrl.searchParams.set('title', title);
+    webhookUrl.searchParams.set('requestId', requestId);
 
-    console.log('n8n response status:', n8nResponse.status);
-    const n8nResponseText = await n8nResponse.text();
-    console.log('n8n response body:', n8nResponseText);
+    const n8nResponse = await fetch(webhookUrl.toString(), {
+      method: 'GET',
+    });
 
     if (!n8nResponse.ok) {
       pendingRequests.delete(requestId);
-      throw new Error(`n8n webhook returned ${n8nResponse.status}: ${n8nResponseText}`);
+      throw new Error(`n8n webhook returned ${n8nResponse.status}`);
     }
 
-    console.log('Waiting for webhook response...');
     // Wait for the workflow to complete and send result back
     const finalResult = await responsePromise;
-    console.log('Received final result:', JSON.stringify(finalResult, null, 2));
     return res.status(200).json(finalResult);
 
   } catch (error) {

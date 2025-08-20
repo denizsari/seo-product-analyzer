@@ -69,14 +69,29 @@ export default function Home() {
       }
 
       // Parse and validate response
+      console.log('=== FRONTEND RESPONSE ===');
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
       const data = await response.json();
+      console.log('Parsed response data:', data);
+      
       if (!data) {
         throw new Error('Empty response received');
       }
       
+      // Validate that data has the expected structure
+      if (!data.timestamp && !data.status && !data.data) {
+        console.warn('Response data missing expected structure:', data);
+        // Still try to set it in case it's a different but valid format
+      }
+      
+      console.log('Setting result state with:', data);
       setResult(data);
+      console.log('Result state updated successfully');
     } catch (err) {
       console.error('Frontend form submission error:', err);
+      console.error('Error stack:', (err as Error)?.stack);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
