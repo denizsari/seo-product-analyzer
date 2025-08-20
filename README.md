@@ -1,5 +1,7 @@
 # SEO Product Analyzer
 
+🌐 **LIVE DEMO**: https://seo-product-analyzer-cpv6ktzf2-dreamteamdevs-projects.vercel.app
+
 A Next.js application that integrates with n8n workflows to provide automated SEO analysis for product titles using Google Search and AI-powered content generation.
 
 ## Features
