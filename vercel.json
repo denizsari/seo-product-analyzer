@@ -1,0 +1,20 @@
+{
+  "name": "seo-product-analyzer",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    }
+  ],
+  "env": {
+    "N8N_WEBHOOK_URL": "@n8n_webhook_url",
+    "NEXT_PUBLIC_BACKEND_URL": "@next_public_backend_url"
+  }
+}

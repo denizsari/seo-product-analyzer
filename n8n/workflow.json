@@ -1,0 +1,257 @@
+{
+    "name": "My workflow 4 - Updated",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "cb04381c-f75c-403e-8dee-0ccc087fd732",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [-240, 0],
+        "id": "5bfa3956-6924-406f-b702-47754af6577b",
+        "name": "Webhook",
+        "webhookId": "cb04381c-f75c-403e-8dee-0ccc087fd732"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "e4fd65ac-8ae4-4011-a984-5a51922cd258",
+                "name": "product",
+                "value": "={{ $json.title }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [-32, 0],
+        "id": "c125d1e0-ff51-4549-8869-6c9eaf85d3a0",
+        "name": "Edit Fields"
+      },
+      {
+        "parameters": {
+          "url": "https://www.googleapis.com/customsearch/v1",
+          "options": {},
+          "queryParametersUi": {
+            "parameter": [
+              {
+                "name": "key",
+                "value": "your key"
+              },
+              {
+                "name": "cx",
+                "value": "your cx"
+              },
+              {
+                "name": "q",
+                "value": "=intitle:\"{{ $json.title }}\" (pricing OR features OR buy OR software) -medium.com -quora.com -youtube.com -linkedin.com "
+              }
+            ]
+          }
+        },
+        "id": "47bcd8ab-ab51-4b4e-bfe4-aeb2819bd9c6",
+        "name": "Google Search",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [208, 0],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "functionCode": "let allTitles = [];\nlet allDescriptions = [];\nlet allKeywords = [];\n\nfor (const item of $json.items) {\n  allTitles.push(item.title);\n  allDescriptions.push(item.snippet);\n\n  const keywords = item.title\n    .toLowerCase()\n    .replace(/[^a-zA-Z0-9 ]/g, '')\n    .split(' ')\n    .filter(w => w.length > 3);\n\n  allKeywords.push(...keywords);\n}\n\n// Create unique keywords\nconst uniqueKeywords = [...new Set(allKeywords)];\n\nreturn [\n  {\n    json: {\n      chatInput: `\nTitle List:\n${allTitles.join('\\n')}\n\nDescription List:\n${allDescriptions.join('\\n')}\n\nKeywords:\n${uniqueKeywords.join(', ')}\n      `.trim()\n    }\n  }\n];\n"
+        },
+        "id": "f91a3482-4c9c-4a6b-9d8c-b9746ffba22b",
+        "name": "Extract Competitor Data",
+        "type": "n8n-nodes-base.function",
+        "position": [448, 0],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "messages": {
+            "messageValues": [
+              {
+                "message": "You are an expert SEO content writer and product copywriter.  generate the following in one output:  1. SEO Meta Data: - Title: (exact product title, must be the same as product title below) - Description: A concise, persuasive meta description optimized for Google SEO best practices. Make sure it is between 120-160 characters, includes main keywords naturally, and encourages clicks. - Keywords: A list of relevant, highly ranked keywords related to the product.  2. Product Content: - Product Title: (exact same title as SEO Meta Data Title) - Product Description: A detailed, engaging product description of minimum 150 words that highlights the product's key features, benefits, and usage. Use natural language with relevant keywords but avoid keyword stuffing.  Format the output exactly like this:  --- SEO Meta Data: Title: ... Description: ... Keywords: ...  Product Content: Product Title: ... Product Description: ...  ---  Ensure that the SEO Meta Data Title and Product Title are exactly the same string. Follow SEO best practices for titles, descriptions, and keyword usage to maximize Google ranking potential."
+              }
+            ]
+          }
+        },
+        "id": "5e767630-b845-4cb1-b572-8ac88c95f5a4",
+        "name": "Basic LLM Chain",
+        "type": "@n8n/n8n-nodes-langchain.chainLlm",
+        "position": [672, 0],
+        "typeVersion": 1.5
+      },
+      {
+        "parameters": {
+          "modelName": "models/gemini-2.0-flash",
+          "options": {}
+        },
+        "id": "dc3a0a34-eed9-4eae-b839-b763fab56b4a",
+        "name": "Google Gemini Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "position": [672, 288],
+        "typeVersion": 1,
+        "credentials": {
+          "googlePalmApi": {
+            "id": "g72UeLsLytvQfGvy",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const inputText = $json.text; // Your combined text input\n\nfunction getFieldValue(text, field) {\n  const regex = new RegExp(field + ':\\\\s*([\\\\s\\\\S]*?)(?=\\\\n\\\\S|$)', 'i');\n  const match = text.match(regex);\n  return match ? match[1].trim() : '';\n}\n\nfunction splitSections(text) {\n  // Extract sections by titles\n  const seoMetaMatch = text.match(/SEO Meta Data:\\n([\\s\\S]*?)\\n\\nProduct Content:/i);\n  const productContentMatch = text.match(/Product Content:\\n([\\s\\S]*)/i);\n\n  const seoMeta = seoMetaMatch ? seoMetaMatch[1].trim() : '';\n  const productContent = productContentMatch ? productContentMatch[1].trim() : '';\n\n  return [\n    {\n      json: {\n        type: 'seo_meta_data',\n        title: getFieldValue(seoMeta, 'Title'),\n        description: getFieldValue(seoMeta, 'Description'),\n        keywords: getFieldValue(seoMeta, 'Keywords'),\n        product_title: '',          // empty for SEO row\n        product_description: ''     // empty for SEO row\n      }\n    },\n    {\n      json: {\n        type: 'product_content',\n        title: '',                  // empty for Product row\n        description: '',\n        keywords: '',\n        product_title: getFieldValue(productContent, 'Product Title'),\n        product_description: getFieldValue(productContent, 'Product Description')\n      }\n    }\n  ];\n}\n\nreturn splitSections($input.first().json.text);\n"
+        },
+        "id": "d1f26823-c74d-471f-9bd5-2ae1f9476437",
+        "name": "Code Formatting",
+        "type": "n8n-nodes-base.code",
+        "position": [1056, 0],
+        "typeVersion": 2
+      },
+      {
+        "parameters": {
+          "jsCode": "// Organize the data from Code Formatting node\nconst items = $input.all();\n\nlet seoData = {};\nlet productData = {};\n\n// Process each item\nfor (const item of items) {\n  if (item.json.type === 'seo_meta_data') {\n    seoData = {\n      title: item.json.title,\n      description: item.json.description,\n      keywords: item.json.keywords\n    };\n  } else if (item.json.type === 'product_content') {\n    productData = {\n      product_title: item.json.product_title,\n      product_description: item.json.product_description\n    };\n  }\n}\n\n// Combine everything into final structure\nconst finalData = {\n  timestamp: new Date().toISOString(),\n  status: 'success',\n  data: {\n    seo_meta: seoData,\n    product_content: productData\n  },\n  original_request: {\n    product: $node['Edit Fields'].json.product\n  }\n};\n\nreturn [{ json: finalData }];"
+        },
+        "id": "prepare-data-node",
+        "name": "Prepare Final Data",
+        "type": "n8n-nodes-base.code",
+        "position": [1296, 0],
+        "typeVersion": 2
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "url": "https://your-backend-domain.com/api/seo-results",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "options": {
+            "timeout": 10000
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "data",
+                "value": "={{ JSON.stringify($json) }}"
+              }
+            ]
+          }
+        },
+        "id": "send-to-backend-node",
+        "name": "Send to Backend",
+        "type": "n8n-nodes-base.httpRequest",
+        "position": [1536, 0],
+        "typeVersion": 4.2
+      }
+    ],
+    "pinData": {},
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields": {
+        "main": [
+          [
+            {
+              "node": "Google Search",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Search": {
+        "main": [
+          [
+            {
+              "node": "Extract Competitor Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Competitor Data": {
+        "main": [
+          [
+            {
+              "node": "Basic LLM Chain",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Basic LLM Chain",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Basic LLM Chain": {
+        "main": [
+          [
+            {
+              "node": "Code Formatting",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code Formatting": {
+        "main": [
+          [
+            {
+              "node": "Prepare Final Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Final Data": {
+        "main": [
+          [
+            {
+              "node": "Send to Backend",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "active": false,
+    "settings": {
+      "executionOrder": "v1"
+    }
+  }
