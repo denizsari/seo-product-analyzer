@@ -20,14 +20,17 @@ export default async function handler(
   }
 
   try {
-    const { product } = req.body;
+    const { title, requestId } = req.body;
 
-    if (!product) {
-      return res.status(400).json({ error: 'Product name is required' });
+    if (!title) {
+      return res.status(400).json({ error: 'Product title is required' });
     }
 
-    // Generate unique request ID
-    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    if (!requestId) {
+      return res.status(400).json({ error: 'Request ID is required' });
+    }
+
+    // Use the request ID provided by the frontend
     
     // Create promise to wait for webhook response
     const responsePromise = new Promise<any>((resolve, reject) => {
@@ -47,8 +50,8 @@ export default async function handler(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ 
-        title: product,
-        requestId: requestId // Pass the request ID to track the response
+        title: title,
+        requestId: requestId
       }),
     });
 

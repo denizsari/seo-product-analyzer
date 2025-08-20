@@ -29,20 +29,21 @@ export default async function handler(
   }
 
   try {
-    const { product } = req.body;
+    const { title, requestId } = req.body;
 
-    if (!product) {
-      return res.status(400).json({ error: 'Product name is required' });
+    if (!title) {
+      return res.status(400).json({ error: 'Product title is required' });
     }
 
     // Simulate processing time
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Return mock data with the requested product
+    // Return mock data with the requested title
     const responseData = {
       ...mockSEOData,
       original_request: {
-        product: product
+        product: title,
+        requestId: requestId || `mock_${Date.now()}`
       }
     };
 

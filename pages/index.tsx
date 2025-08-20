@@ -31,10 +31,11 @@ export default function Home() {
   const [testMode, setTestMode] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // Prevent default GET submission behavior
     e.preventDefault();
     
     if (!product.trim()) {
-      setError('Please enter a product name');
+      setError('Please enter a product title');
       return;
     }
 
@@ -43,24 +44,40 @@ export default function Home() {
     setResult(null);
 
     try {
+      // Generate unique request ID for tracking
+      const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       const endpoint = testMode ? '/api/test-seo' : '/api/seo';
+      
+      // Send POST request with proper JSON payload
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ product: product.trim() }),
+        body: JSON.stringify({ 
+          title: product.trim(),
+          requestId: requestId 
+        }),
       });
 
+      // Handle response errors
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to process request');
+        const errorData = await response.json().catch(() => ({ error: 'Invalid response format' }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
+      // Parse and validate response
       const data = await response.json();
+      if (!data) {
+        throw new Error('Empty response received');
+      }
+      
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Frontend form submission error:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -82,7 +99,7 @@ export default function Home() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="product" className="block text-sm font-medium text-gray-700 mb-2">
-                Product Name
+                Product Title
               </label>
               <input
                 type="text"
@@ -90,8 +107,9 @@ export default function Home() {
                 value={product}
                 onChange={(e) => setProduct(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-                placeholder="Enter product name..."
+                placeholder="Enter product title..."
                 disabled={loading}
+                required
               />
             </div>
             
