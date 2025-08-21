@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { handleCors } from '../../utils/cors';
 
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://your-n8n-domain.com/webhook/cb04381c-f75c-403e-8dee-0ccc087fd732';
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || 'https://dnzsrslk.app.n8n.cloud/webhook/cb04381c-f75c-403e-8dee-0ccc087fd732';
 
 interface PendingRequest {
   resolve: (value: any) => void;
@@ -15,6 +16,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Handle CORS (includes preflight OPTIONS handling)
+  if (handleCors(req, res)) {
+    return; // Request was handled (OPTIONS preflight)
+  }
+
+  // Only allow POST requests for the main functionality
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { handleCors } from '../../utils/cors';
 
 // Mock data that matches the expected n8n workflow output format
 const mockSEOData = {
@@ -24,6 +25,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Handle CORS (includes preflight OPTIONS handling)
+  if (handleCors(req, res)) {
+    return; // Request was handled (OPTIONS preflight)
+  }
+
+  // Only allow POST requests for the main functionality
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

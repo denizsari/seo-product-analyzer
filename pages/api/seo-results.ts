@@ -1,10 +1,17 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { handleCors } from '../../utils/cors';
 import { pendingRequests } from './seo';
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Handle CORS (includes preflight OPTIONS handling)
+  if (handleCors(req, res)) {
+    return; // Request was handled (OPTIONS preflight)
+  }
+
+  // Only allow POST requests for the main functionality
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
