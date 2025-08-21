@@ -1,6 +1,29 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { handleCors } from '../../utils/cors';
-import { ShopifySEOResponse } from './shopify-seo';
+
+// Define ShopifySEOResponse interface locally
+interface ShopifySEOResponse {
+  status: 'success' | 'error';
+  data?: {
+    seo_title: string;
+    meta_description: string;
+    product_description: string;
+    keywords: string[];
+    shopify_tags: string[];
+    character_counts: {
+      title_length: number;
+      meta_description_length: number;
+    };
+  };
+  error?: string;
+  timestamp?: string;
+  original_request?: {
+    product_name: string;
+    shopify_store_type: string;
+    target_price_range: string;
+    requestId?: string;
+  };
+}
 
 // Mock data that matches the expected Shopify SEO output format
 const generateMockShopifyData = (productName: string, storeType: string, priceRange: string): ShopifySEOResponse => {
