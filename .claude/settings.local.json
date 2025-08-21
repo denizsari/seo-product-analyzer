@@ -12,7 +12,8 @@
       "Bash(npm install:*)",
       "Bash(vercel:*)",
       "Bash(rm:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
