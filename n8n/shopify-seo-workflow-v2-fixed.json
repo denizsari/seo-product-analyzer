@@ -1,0 +1,255 @@
+{
+  "name": "Shopify SEO Content Generator v2 - Fixed",
+  "version": "2.0.1",
+  "description": "Düzeltilmiş Shopify SEO içerik üretici - JSON format hatası giderildi",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shopify-seo-v2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "webhookId": "shopify-seo-v2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "product_name",
+              "name": "product_name",
+              "value": "={{ $json.body.product_name || 'Product Name Required' }}",
+              "type": "string"
+            },
+            {
+              "id": "shopify_store_type", 
+              "name": "shopify_store_type",
+              "value": "={{ $json.body.shopify_store_type || 'dropshipping' }}",
+              "type": "string"
+            },
+            {
+              "id": "target_price_range",
+              "name": "target_price_range", 
+              "value": "={{ $json.body.target_price_range || 'under_25' }}",
+              "type": "string"
+            },
+            {
+              "id": "additional_context",
+              "name": "additional_context",
+              "value": "={{ $json.body.additional_context || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "request_id",
+              "name": "request_id",
+              "value": "={{ $json.body.requestId || 'shopify_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) }}",
+              "type": "string"
+            },
+            {
+              "id": "timestamp",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "input-validation",
+      "name": "Input Validation & Processing",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gemini API için prompt hazırlama\nconst productName = $json.product_name;\nconst storeType = $json.shopify_store_type;\nconst priceRange = $json.target_price_range.replace('_', '-');\nconst additionalContext = $json.additional_context;\n\n// Dil algılama\nconst isTurkish = /[çğıöşü]/i.test(productName);\n\n// Prompt oluşturma\nconst prompt = isTurkish ? \n`Sen Shopify SEO uzmanısın. Türkçe dil desteği ile, e-ticaret dönüşümü odaklı SEO içerikleri üretiyorsun.\n\nÜrün: ${productName}\nMağaza Tipi: ${storeType}\nFiyat Aralığı: $${priceRange}\nEk Bilgi: ${additionalContext}\n\nAşağıdaki Shopify SEO formatında optimize edilmiş Türkçe içerik üret:\n\n1. SEO BAŞLIK (max 70 karakter):\n- Ana anahtar kelime içersin\n- Dönüşüm odaklı dil kullan\n- Shopify arama algoritmasına uygun\n- Net değer önerisi\n\n2. META AÇIKLAMA (max 160 karakter):\n- Tıklama oranını artıracak metin\n- Fayda ve özellikler dahil\n- Harekete geçirici dil\n- Google SERP optimize\n\n3. ÜRÜN AÇIKLAMASI (250-350 kelime):\n- Özellik-fayda formatı\n- Güven işaretleri ve sosyal kanıt\n- Teknik özellikler (gerekirse)\n- Net değer önerisi\n- Dönüşüm copywriting teknikleri\n- Madde işaretli, okunabilir format\n\n4. SEO ANAHTAR KELİMELER (8-12 adet):\n- Kısa ve uzun kuyruk anahtar kelimeler\n- Ticari niyet anahtar kelimeleri\n- Shopify'a özel arama terimleri\n- Ürün kategori anahtar kelimeleri\n\n5. SHOPIFY ETİKETLERİ (5-8 adet):\n- Platform'a özel format\n- Kategori + özellik etiketleri\n- Mağaza içi arama optimizasyonu\n- Ürün filtreleme optimizasyonu\n\nOptimizasyon Kuralları:\n- Shopify arama algoritmasına odaklan\n- Mağaza tipi (${storeType}) ton belirlesin\n- Fiyat aralığı (${priceRange}) konumlandırmayı etkilemeli\n- Harekete geçirici dil kullan\n- İlgili ürün faydalarını dahil et\n- SEO en iyi uygulamalarını takip et\n\nCevabını temiz, yapılandırılmış format olarak ver. Shopify'a kopyala-yapıştır için hazır olsun.`\n:\n`You are a Shopify SEO expert specializing in e-commerce conversion-focused SEO content generation.\n\nProduct: ${productName}\nStore Type: ${storeType}\nPrice Range: $${priceRange}\nAdditional Info: ${additionalContext}\n\nGenerate optimized English content following this Shopify SEO format:\n\n1. SEO TITLE (max 70 characters):\n- Include primary keyword\n- Conversion-focused language\n- Shopify search optimized\n- Clear value proposition\n\n2. META DESCRIPTION (max 160 characters):\n- Compelling click-through copy\n- Include benefits and features\n- Call-to-action oriented\n- Google SERP optimized\n\n3. PRODUCT DESCRIPTION (250-350 words):\n- Feature-benefit format\n- Trust signals and social proof\n- Technical specifications when relevant\n- Clear value proposition\n- Conversion copywriting techniques\n- Scannable format with bullet points\n\n4. SEO KEYWORDS (8-12 keywords):\n- Mix of short-tail and long-tail keywords\n- Commercial intent keywords\n- Shopify-specific search terms\n- Product category keywords\n\n5. SHOPIFY TAGS (5-8 tags):\n- Platform-specific format\n- Category + feature tags\n- Searchable within store\n- Product filtering optimization\n\nOptimization Rules:\n- Focus on Shopify's search algorithm\n- Consider the store type (${storeType}) for tone\n- Price range (${priceRange}) should influence positioning\n- Use action-oriented language for conversions\n- Include relevant product benefits\n- Follow SEO best practices\n\nFormat your response as clean, structured content ready for copy-paste into Shopify.`;\n\n// Gemini API için JSON payload hazırlama\nconst geminiPayload = {\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": prompt\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.8,\n    \"topK\": 40,\n    \"topP\": 0.95,\n    \"maxOutputTokens\": 3000,\n    \"stopSequences\": []\n  },\n  \"safetySettings\": [\n    {\n      \"category\": \"HARM_CATEGORY_HARASSMENT\",\n      \"threshold\": \"BLOCK_MEDIUM_AND_ABOVE\"\n    },\n    {\n      \"category\": \"HARM_CATEGORY_HATE_SPEECH\",\n      \"threshold\": \"BLOCK_MEDIUM_AND_ABOVE\"\n    }\n  ]\n};\n\nreturn [{\n  json: {\n    ...geminiPayload,\n    // Debug bilgileri\n    _debug: {\n      language_detected: isTurkish ? 'turkish' : 'english',\n      product_name: productName,\n      store_type: storeType,\n      price_range: priceRange\n    }\n  }\n}];"
+      },
+      "id": "prompt-builder",
+      "name": "AI Prompt Builder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyCnOz1l1SPoTbIVK2jx2KImJr8DIe26hhg"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"contents\": $json.contents, \"generationConfig\": $json.generationConfig, \"safetySettings\": $json.safetySettings } }}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "id": "shopify-seo-ai",
+      "name": "Shopify SEO AI Generator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Google Gemini API response parsing\nconst geminiResponse = $json;\nlet aiResponse = '';\n\n// Google Gemini API response format kontrolü\nif (geminiResponse.candidates && geminiResponse.candidates[0] && geminiResponse.candidates[0].content && geminiResponse.candidates[0].content.parts && geminiResponse.candidates[0].content.parts[0]) {\n  aiResponse = geminiResponse.candidates[0].content.parts[0].text;\n} else {\n  console.error('Gemini AI response format error:', JSON.stringify(geminiResponse, null, 2));\n  throw new Error('Invalid Gemini AI response format');\n}\n\nconsole.log('Raw AI Response:', aiResponse.substring(0, 500));\n\n// Gelişmiş metin işleme fonksiyonları\nfunction extractSection(text, sectionNames) {\n  const sectionArray = Array.isArray(sectionNames) ? sectionNames : [sectionNames];\n  \n  for (const sectionName of sectionArray) {\n    const patterns = [\n      new RegExp(`${sectionName}[:\\\\s]*([\\\\s\\\\S]*?)(?=\\\\n\\\\n[A-Z]|\\\\n[0-9]\\\\.|$)`, 'i'),\n      new RegExp(`${sectionName}[:\\\\s]*\\\\n([\\\\s\\\\S]*?)(?=\\\\n\\\\n|\\\\n[A-Z]|$)`, 'i'),\n      new RegExp(`${sectionName}[:\\\\s]*([^\\\\n]+)`, 'i')\n    ];\n    \n    for (const regex of patterns) {\n      const match = text.match(regex);\n      if (match && match[1]) {\n        return match[1].trim().replace(/^[-*•]\\\\s*/, '').replace(/^\\\"|\\\"$/g, '');\n      }\n    }\n  }\n  return '';\n}\n\nfunction extractList(text, sectionNames, separator = ',') {\n  const section = extractSection(text, sectionNames);\n  if (!section) return [];\n  \n  const separators = [separator, '\\\\n', '-', '•', '*'];\n  let items = [];\n  \n  for (const sep of separators) {\n    items = section.split(sep)\n      .map(item => item.trim().replace(/^[-*•]\\\\s*/, '').replace(/^[0-9]+\\\\.\\\\s*/, ''))\n      .filter(item => item.length > 0 && item.length < 100);\n    \n    if (items.length > 1) break;\n  }\n  \n  return items.length > 0 ? items : [section];\n}\n\n// İçerik çıkarma\nconst seoTitle = extractSection(aiResponse, ['SEO BAŞLIK', 'SEO TITLE', 'BAŞLIK', 'TITLE']);\nconst metaDescription = extractSection(aiResponse, ['META AÇIKLAMA', 'META DESCRIPTION', 'AÇIKLAMA', 'DESCRIPTION']);\nconst productDescription = extractSection(aiResponse, ['ÜRÜN AÇIKLAMASI', 'PRODUCT DESCRIPTION', 'AÇIKLAMA']);\nconst keywords = extractList(aiResponse, ['SEO ANAHTAR KELİMELER', 'SEO KEYWORDS', 'ANAHTAR KELİMELER', 'KEYWORDS']);\nconst shopifyTags = extractList(aiResponse, ['SHOPIFY ETİKETLERİ', 'SHOPIFY TAGS', 'ETİKETLER', 'TAGS']);\n\n// Input data alma\nconst inputData = $('Input Validation & Processing').first().json;\nconst debugData = $('AI Prompt Builder').first().json._debug;\n\n// Veri temizleme ve validasyon\nconst cleanTitle = (seoTitle || 'SEO Başlık Üretilemedi').substring(0, 70);\nconst cleanMetaDesc = (metaDescription || 'Meta açıklama üretilemedi').substring(0, 160);\nconst cleanProductDesc = productDescription || 'Ürün açıklaması üretilemedi';\nconst cleanKeywords = keywords.slice(0, 12).filter(k => k.length > 2);\nconst cleanTags = shopifyTags.slice(0, 8).filter(t => t.length > 1);\n\n// Fallback anahtar kelimeler\nif (cleanKeywords.length === 0) {\n  cleanKeywords.push(\n    'shopify',\n    'ecommerce', \n    inputData.product_name.toLowerCase().split(' ')[0],\n    inputData.shopify_store_type,\n    'online store'\n  );\n}\n\n// Fallback etiketler\nif (cleanTags.length === 0) {\n  cleanTags.push(\n    'featured',\n    'bestseller', \n    'new',\n    inputData.shopify_store_type,\n    'trending'\n  );\n}\n\n// Final sonuç\nconst result = {\n  status: 'success',\n  request_id: inputData.request_id,\n  timestamp: inputData.timestamp,\n  input: {\n    product_name: inputData.product_name,\n    shopify_store_type: inputData.shopify_store_type,\n    target_price_range: inputData.target_price_range,\n    additional_context: inputData.additional_context,\n    requestId: inputData.request_id\n  },\n  data: {\n    seo_title: cleanTitle,\n    meta_description: cleanMetaDesc,\n    product_description: cleanProductDesc,\n    keywords: cleanKeywords,\n    shopify_tags: cleanTags,\n    character_counts: {\n      title_length: cleanTitle.length,\n      meta_description_length: cleanMetaDesc.length,\n      product_description_length: cleanProductDesc.length\n    }\n  },\n  generated_at: new Date().toISOString(),\n  processing_info: {\n    ai_model: 'gemini-1.5-flash',\n    language_detected: debugData?.language_detected || 'unknown',\n    content_length: aiResponse.length,\n    extraction_success: {\n      title: !!seoTitle,\n      meta: !!metaDescription,\n      description: !!productDescription,\n      keywords: keywords.length > 0,\n      tags: shopifyTags.length > 0\n    }\n  }\n};\n\nconsole.log('Processed Result:', JSON.stringify(result, null, 2));\n\nreturn [{ json: result }];"
+      },
+      "id": "content-formatter",
+      "name": "Advanced Content Formatter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://seo-product-analyzer.vercel.app/api/shopify-seo-results",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "User-Agent",
+              "value": "n8n-shopify-seo-workflow-v2-fixed"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 15000,
+          "retry": {
+            "enabled": true,
+            "maxRetries": 2,
+            "retryInterval": 1000
+          }
+        }
+      },
+      "id": "send-response",
+      "name": "Send to Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Input Validation & Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input Validation & Processing": {
+      "main": [
+        [
+          {
+            "node": "AI Prompt Builder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Prompt Builder": {
+      "main": [
+        [
+          {
+            "node": "Shopify SEO AI Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shopify SEO AI Generator": {
+      "main": [
+        [
+          {
+            "node": "Advanced Content Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Advanced Content Formatter": {
+      "main": [
+        [
+          {
+            "node": "Send to Backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "content-type": "application/json"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "product_name": "Bluetooth Kulaklık",
+            "shopify_store_type": "dropshipping",
+            "target_price_range": "25_50",
+            "additional_context": "Yüksek kalite, gürültü önleyici",
+            "requestId": "test_fixed_workflow"
+          },
+          "webhookUrl": "https://n8n.example.com/webhook/shopify-seo-v2",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "id": "shopify-fixed",
+      "name": "Shopify SEO Fixed"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-08-21T08:45:00.000Z",
+  "versionId": "2.0.1"
+}

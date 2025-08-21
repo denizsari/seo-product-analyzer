@@ -1,0 +1,169 @@
+{
+  "name": "Shopify SEO Content Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shopify-seo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "product_name",
+              "name": "product_name",
+              "value": "={{ $json.body.product_name || 'Product Name Required' }}",
+              "type": "string"
+            },
+            {
+              "id": "shopify_store_type",
+              "name": "shopify_store_type",
+              "value": "={{ $json.body.shopify_store_type || 'dropshipping' }}",
+              "type": "string"
+            },
+            {
+              "id": "target_price_range",
+              "name": "target_price_range",
+              "value": "={{ $json.body.target_price_range || '25_50' }}",
+              "type": "string"
+            },
+            {
+              "id": "additional_context",
+              "name": "additional_context",
+              "value": "={{ $json.body.additional_context || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "request_id",
+              "name": "request_id",
+              "value": "={{ 'shopify_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "input-validation",
+      "name": "Input Validation",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-flash",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a Shopify SEO expert specializing in product optimization and conversion copywriting. Generate high-converting, SEO-optimized content for Shopify stores.\n\nProduct: {{ $json.product_name }}\nStore Type: {{ $json.shopify_store_type }}\nPrice Range: ${{ $json.target_price_range.replace('_', '-') }}\nAdditional Context: {{ $json.additional_context }}\n\nGenerate optimized content following these Shopify best practices:\n\n1. SEO TITLE (max 70 characters):\n- Include primary keyword\n- Conversion-focused language\n- Shopify search optimized\n- Clear value proposition\n\n2. META DESCRIPTION (max 160 characters):\n- Compelling click-through copy\n- Include benefits and features\n- Call-to-action oriented\n- Google SERP optimized\n\n3. PRODUCT DESCRIPTION (250-350 words):\n- Feature-benefit format\n- Trust signals and social proof\n- Technical specifications when relevant\n- Clear value proposition\n- Conversion copywriting techniques\n- Scannable format with bullet points\n\n4. SEO KEYWORDS (8-12 keywords):\n- Mix of short-tail and long-tail keywords\n- Commercial intent keywords\n- Shopify-specific search terms\n- Product category keywords\n\n5. SHOPIFY TAGS (5-8 tags):\n- Platform-specific format\n- Category + feature tags\n- Searchable within store\n- Product filtering optimization\n\nOptimization Rules:\n- Focus on Shopify's search algorithm\n- Consider the store type ({{ $json.shopify_store_type }}) for tone\n- Price range ({{ $json.target_price_range }}) should influence positioning\n- Use action-oriented language for conversions\n- Include relevant product benefits\n\nFormat your response as clean, structured content ready for copy-paste into Shopify."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "shopify-seo-ai",
+      "name": "Shopify SEO AI",
+      "type": "n8n-nodes-base.googleGemini",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResponse = $json.text;\n\n// Parse AI response and extract structured content\nfunction extractSection(text, sectionName) {\n  const regex = new RegExp(`${sectionName}[:\\\\s]*([\\\\s\\\\S]*?)(?=\\\\n\\\\n[A-Z]|$)`, 'i');\n  const match = text.match(regex);\n  return match ? match[1].trim().replace(/^[-*]\\\\s*/, '') : '';\n}\n\nfunction extractKeywords(text) {\n  const keywordSection = extractSection(text, 'SEO KEYWORDS|KEYWORDS');\n  return keywordSection.split(/[,\\\\n]/).map(k => k.trim().replace(/^[-*]\\\\s*/, '')).filter(k => k.length > 0);\n}\n\nfunction extractTags(text) {\n  const tagSection = extractSection(text, 'SHOPIFY TAGS|TAGS');\n  return tagSection.split(/[,\\\\n]/).map(t => t.trim().replace(/^[-*]\\\\s*/, '')).filter(t => t.length > 0);\n}\n\n// Extract structured data\nconst seoTitle = extractSection(aiResponse, 'SEO TITLE|TITLE');\nconst metaDescription = extractSection(aiResponse, 'META DESCRIPTION|DESCRIPTION');\nconst productDescription = extractSection(aiResponse, 'PRODUCT DESCRIPTION');\nconst keywords = extractKeywords(aiResponse);\nconst shopifyTags = extractTags(aiResponse);\n\n// Validate and clean data\nconst cleanTitle = seoTitle.substring(0, 70); // Shopify limit\nconst cleanMetaDesc = metaDescription.substring(0, 160); // Google limit\nconst cleanProductDesc = productDescription.length > 0 ? productDescription : 'Product description not generated';\n\n// Get input data\nconst inputData = $input.first().json;\n\nreturn [{\n  json: {\n    status: 'success',\n    request_id: inputData.request_id,\n    input: {\n      product_name: inputData.product_name,\n      shopify_store_type: inputData.shopify_store_type,\n      target_price_range: inputData.target_price_range,\n      additional_context: inputData.additional_context\n    },\n    data: {\n      seo_title: cleanTitle,\n      meta_description: cleanMetaDesc,\n      product_description: cleanProductDesc,\n      keywords: keywords.slice(0, 12), // Max 12 keywords\n      shopify_tags: shopifyTags.slice(0, 8), // Max 8 tags\n      character_counts: {\n        title_length: cleanTitle.length,\n        meta_description_length: cleanMetaDesc.length,\n        product_description_length: cleanProductDesc.length\n      }\n    },\n    generated_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "content-formatter",
+      "name": "Content Formatter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://seo-product-analyzer.vercel.app/api/shopify-seo-results",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-response",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Input Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input Validation": {
+      "main": [
+        [
+          {
+            "node": "Shopify SEO AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shopify SEO AI": {
+      "main": [
+        [
+          {
+            "node": "Content Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Formatter": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-21T02:30:00.000Z",
+  "versionId": "1"
+}
